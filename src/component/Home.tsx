@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 
+//############################################
+//Định nghĩa interface cho typescript
+//--------------------------------------------
 interface VoiceOption {
   name: string;
   code: string;
@@ -12,19 +15,27 @@ interface URL {
 interface VoiceOptions {
   [key: string]: VoiceOption[];
 }
-
-const URL_SERVICE: URL = {
-  ViettelAI: "https://viettelai.vn/tts/speech_synthesis",
-  FPTAI: "https://api.fpt.ai/hmi/tts/v5",
-  ZaloAI: "https://api.zalo.ai/v1/tts/synthesize",
-};
 interface MAX_MIN {
   [key: string]: {
     max: number;
     min: number;
   };
 }
+//--------------------------------------------
+//############################################
 
+//############################################
+//Định nghĩa thông tin cho mỗi API Service của ViettelAI, FPTAI, ZaloAI
+//--------------------------------------------
+
+// Base URL
+const URL_SERVICE: URL = {
+  ViettelAI: "https://viettelai.vn/tts/speech_synthesis",
+  FPTAI: "https://api.fpt.ai/hmi/tts/v5",
+  ZaloAI: "https://api.zalo.ai/v1/tts/synthesize",
+};
+
+// Tốc độ lớn nhất - bé nhất
 const MAX_MIN_SERVICE: MAX_MIN = {
   ViettelAI: {
     max: 1.2,
@@ -34,6 +45,7 @@ const MAX_MIN_SERVICE: MAX_MIN = {
   ZaloAI: { max: 1.2, min: 0.8 },
 };
 
+//format request ở 3 services API
 const serviceAPI = (
   serviceName: string,
   apiKey: string,
@@ -88,6 +100,7 @@ const serviceAPI = (
   }
 };
 
+//Danh sách các loại giọng
 const serviceVoiceOptions: VoiceOptions = {
   ViettelAI: [
     {
@@ -213,12 +226,18 @@ const serviceVoiceOptions: VoiceOptions = {
   ],
 };
 
+//Danh sách các văn bản mẫu
 const sampleTexts: string[] = [
   "Quan điểm thứ nhất cho rằng, văn bản là phương thức để truyền đạt thông tin từ một cá nhân này đến cá nhân khác hoặc từ một tổ chức đến cá nhân/tổ chức khác thông qua ngôn ngữ viết trên chất liệu giấy hoặc điện tử.",
   "Theo quan điểm này thì các loại giấy tờ như giấy phép, thông báo, báo cáo,  câu hỏi, tài liệu… đều được coi là văn bản.",
   "Văn bản là một loại hình phương tiện để ghi nhận, lưu giữ và truyền đạt các thông tin từ chủ thể này sang chủ thể khác bằng ký hiệu gọi là chữ viết.",
 ];
+//--------------------------------------------
+//############################################
 
+//############################################
+//Hàm Render chính
+//--------------------------------------------
 const Home: React.FC = () => {
   const [selectedService, setSelectedService] = useState<"ViettelAI" | "FPTAI" | "ZaloAI">(
     "ViettelAI"
@@ -239,23 +258,28 @@ const Home: React.FC = () => {
     setToken("");
   };
 
+  // Function chạy lúc ấn nút Submit
   const handleConvert = async () => {
     setLoading(true);
 
+    //kiểm tra xem wav có được support bởi browser hay không
     const audio = document.createElement("audio");
     const isWavSupported = !!audio.canPlayType("audio/wav");
     console.log(`WAV supported: ${isWavSupported}`);
 
+    //kiểm tra đủ token và text chưa
     if (!token || !text) {
       alert("Please provide both token and text.");
       return;
     }
 
     try {
+      // gọi tới API bên thứ 3
       const response = await fetch(
         selectedServiceURL,
         serviceAPI(selectedService, token, selectedVoice, speed.toString(), text)
       );
+      //Mỗi bên thứ 3 có cách xử lý và phản hồi khác nhau
       if (selectedService === "ViettelAI") {
         //ViettelAI chuyển nguyên file wav về, cơ chế request -> response như bình thường
         console.log("reponse ", response);
@@ -294,6 +318,7 @@ const Home: React.FC = () => {
     }
   };
 
+  //Hàm poll Async này để xử lý liên tục thử gọi tới URL host audio mà FPT và Zalo phản hồi mỗi 1s cho tới khi thành công
   const pollAsyncUrl = async (asyncUrl: string) => {
     try {
       const asyncResponse = await fetch(asyncUrl);
